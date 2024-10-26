@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Hand Tracking Viewer</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+        :root {
+            --primary-color: #4CAF50;
+            --secondary-color: #2196F3;
+            --background-color: #f0f0f0;
+            --text-color: #333;
+            --card-background: rgba(255, 255, 255, 0.9);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            color: var(--text-color);
+        }
+
+        .container {
+            background-color: var(--card-background);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            max-width: 900px;
+            width: 100%;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: var(--text-color);
+            margin-bottom: 20px;
+            font-size: 2.5em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        #videoFeed {
+            width: 100%;
+            height: 0;
+            padding-bottom: 75%; /* 4:3 aspect ratio */
+            background-color: #ddd;
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 18px;
+            color: #666;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #videoFeed img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        button:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        #status {
+            margin-top: 20px;
+            font-weight: bold;
+            font-size: 1.2em;
+            color: var(--text-color);
+        }
+
+        #loadingIndicator {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--secondary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        #controls {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            margin: 10px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            max-width: 200px;
+        }
+
+        #screenshot {
+            display: none;
+            max-width: 100%;
+            height: auto;
+            margin-top: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        #handData {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+            font-size: 0.9em;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: var(--card-background);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .dark-theme {
+            --primary-color: #66bb6a;
+            --secondary-color: #42a5f5;
+            --background-color: #121212;
+            --text-color: #ffffff;
+            --card-background: rgba(30, 30, 30, 0.9);
+        }
+
+        .dark-theme body {
+            background: linear-gradient(135deg, #1a237e 0%, #311b92 100%);
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" id="themeToggle">🌓</button>
+    <div class="container">
+        <h1>Advanced Hand Tracking Viewer</h1>
+        <div id="videoFeed">
+            Video feed not connected
+        </div>
+        <div class="button-container">
+            <button id="connectBtn">Connect to API</button>
+            <button id="disconnectBtn" disabled>Disconnect</button>
+        </div>
+        <div id="status">Status: Not connected</div>
+        <div id="loadingIndicator">
+            <div class="spinner"></div>
+            <p>Connecting...</p>
+        </div>
+        <div id="controls">
+            <div class="control-group">
+                <label for="brightness">Brightness</label>
+                <input type="range" id="brightness" min="0" max="200" value="100">
+            </div>
+            <div class="control-group">
+                <label for="contrast">Contrast</label>
+                <input type="range" id="contrast" min="0" max="200" value="100">
+            </div>
+            <div class="control-group">
+                <label for="saturation">Saturation</label>
+                <input type="range" id="saturation" min="0" max="200" value="100">
+            </div>
+        </div>
+        <img id="screenshot" alt="Screenshot">
+        <div id="handData"></div>
+    </div>
+
+    <script>
+        const videoFeed = document.getElementById('videoFeed');
+        const connectBtn = document.getElementById('connectBtn');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        const status = document.getElementById('status');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const screenshot = document.getElementById('screenshot');
+        const brightnessSlider = document.getElementById('brightness');
+        const contrastSlider = document.getElementById('contrast');
+        const saturationSlider = document.getElementById('saturation');
+        const themeToggle = document.getElementById('themeToggle');
+        let isConnected = false;
+        let videoImg;
+
+        connectBtn.addEventListener('click', connectToAPI);
+        disconnectBtn.addEventListener('click', disconnectFromAPI);
+        brightnessSlider.addEventListener('input', applyFilters);
+        contrastSlider.addEventListener('input', applyFilters);
+        saturationSlider.addEventListener('input', applyFilters);
+        themeToggle.addEventListener('click', toggleTheme);
+
+        function connectToAPI() {
+            showLoading(true);
+            isConnected = true; // Simulate successful connection
+            updateUI();
+            const apiUrl = 'http://127.0.0.1:5000/hand_data'; // Replace with your API URL
+            videoImg = new Image();
+            videoImg.src = apiUrl;
+            videoImg.onload = () => {
+                videoFeed.innerHTML = ''; // Clear existing content
+                videoFeed.appendChild(videoImg);
+                takeScreenshot();
+                showLoading(false);
+            };
+        }
+
+        function disconnectFromAPI() {
+            isConnected = false;
+            videoFeed.innerHTML = 'Video feed not connected';
+            status.textContent = 'Status: Not connected';
+            disconnectBtn.disabled = true;
+        }
+
+        function updateUI() {
+            connectBtn.disabled = isConnected;
+            disconnectBtn.disabled = !isConnected;
+            status.textContent = isConnected ? 'Status: Connected' : 'Status: Not connected';
+        }
+
+        function showLoading(show) {
+            loadingIndicator.style.display = show ? 'block' : 'none';
+        }
+
+        function takeScreenshot(videoImg) {
+            const canvas = document.createElement('canvas');
+            canvas.width = videoImg.width;
+            canvas.height = videoImg.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(videoImg, 0, 0);
+            const screenshotData = canvas.toDataURL('image/png');
+        
+            screenshot.src = screenshotData; // Display the screenshot (if needed)
+            screenshot.style.display = 'block';
+        
+            // Automatically trigger download of the screenshot
+            const downloadLink = document.createElement('a');
+            downloadLink.href = screenshotData; // Set the href to the data URL
+            downloadLink.download = 'screenshot.png'; // Set the filename for download
+            document.body.appendChild(downloadLink); // Append the link to the body
+            downloadLink.click(); // Programmatically click the link to trigger the download
+            document.body.removeChild(downloadLink); // Remove the link after downloading
+        }
+        
+
+        function applyFilters() {
+            if (!videoImg) return;
+
+            const brightness = brightnessSlider.value;
+            const contrast = contrastSlider.value;
+            const saturation = saturationSlider.value;
+
+            videoImg.style.filter = `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`;
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark-theme');
+        }
+    </script>
+</body>
+</html>
